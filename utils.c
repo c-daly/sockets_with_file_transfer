@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "utils.h"
 
 long get_file_size(FILE* file) {

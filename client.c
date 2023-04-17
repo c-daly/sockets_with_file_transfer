@@ -59,7 +59,8 @@ int main(int argc, char* argv[])
     return -1;
   }
   printf("Connected with server successfully\n");
-  
+
+  FILE* file = fopen("client_file", "w");  
   while(!SHUTDOWN) {
     // Get input from the user:
     printf("Enter message: ");
@@ -77,7 +78,8 @@ int main(int argc, char* argv[])
       return -1;
     }
     
-    printf("Server's response: %s\n",server_message);
+    //printf("Server's response: %s\n",server_message);
+    fprintf(file, "%s", server_message);
   }    
   // Close the socket:
   close(socket_desc);

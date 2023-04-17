@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -6,6 +7,22 @@
 #include <pthread.h>
 #include "utils.h"
 
+void send_file(FILE *fp, int sockfd)
+{
+    //int size = get_file_size(fp);
+    int size = 1024;
+    char *data = malloc(size);
+
+    while(fgets(data, 1024, fp)!=NULL)
+    {
+        if(send(sockfd, data, sizeof(data), 0)== -1)
+        {
+            perror("[-] Error in sendung data");
+            exit(1);
+        }
+        bzero(data, size);
+    }
+}
 /*
  * thread worker that handles input from 
  * connected sockets
@@ -21,14 +38,14 @@ void* handle_socket(void* arg) {
     if (recv(*client_sock, client_message, 
             sizeof(client_message), 0) > 0){
       char *cmd = strtok(client_message, " ");
-      send(*client_sock, client_message, strlen(client_message), 0); 
+      //send(*client_sock, client_message, strlen(client_message), 0); 
+      send_file(file, *client_sock);
    }
     if(*client_message) {
       printf("Msg from client: %ld\n", get_file_size(file));
       *client_message = NULL;
     }
   }
- 
 }
 
 int main_loop(int socket_desc) {
