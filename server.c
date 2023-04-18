@@ -9,11 +9,11 @@
 
 void send_file(FILE *fp, int sockfd)
 {
-    //int size = get_file_size(fp);
-    int size = 1024;
-    char *data = malloc(size);
+    int size = get_file_size(fp);
+    int buffer_size = 1024;
+    char data[buffer_size];
 
-    while(fgets(data, 1024, fp)!=NULL)
+    while(fgets(data, size, fp)!=NULL)
     {
         if(send(sockfd, data, sizeof(data), 0)== -1)
         {
@@ -31,14 +31,16 @@ void* handle_socket(void* arg) {
   char client_message[8196], server_message[8196];
   int* client_sock = (int*) arg; 
   FILE *file = fopen("server_files/test_server_file", "rb");
-  int fd = fileno(file);
-  
+  int size = get_file_size(file); 
+
   while(1) {
    // Receive client's message:
     if (recv(*client_sock, client_message, 
             sizeof(client_message), 0) > 0){
       char *cmd = strtok(client_message, " ");
       //send(*client_sock, client_message, strlen(client_message), 0); 
+
+      
       send_file(file, *client_sock);
    }
     if(*client_message) {
