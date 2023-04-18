@@ -7,44 +7,71 @@
 #include <pthread.h>
 #include "utils.h"
 
-void send_file(FILE *fp, int sockfd)
-{
-    int size = get_file_size(fp);
-    int buffer_size = 1024;
-    char data[buffer_size];
+char client_message[8196], server_message[8196];
+//int socket_desc, client_sock;
+pthread_t pthread[10]; // 10 max concurrent connections
+struct sockaddr_in server_addr, client_addr;
+int SHUTDOWN = 0;
 
-    while(fgets(data, size, fp)!=NULL)
-    {
-        if(send(sockfd, data, sizeof(data), 0)== -1)
-        {
-            perror("[-] Error in sendung data");
-            exit(1);
-        }
-        bzero(data, size);
-    }
+
+char* send_file(FILE *fp, int sockfd, int size)
+{
+  char *data = malloc(size + 1);
+
+  printf("%s\n", data);
+  fseek(fp, 0, SEEK_SET);
+  fread(data, size, 1, fp); 
+  send(sockfd, data, size, 0);
+  return data;
 }
+void* handle_put(int* client_sock, char* data) {
+  if(recv(*client_sock, data, sizeof(data), 0) < 0) {
+    printf("Error reading put message\n");    
+  }
+  printf("data: %s\n", data);
+  //save_buffer_to_file(data, "server_files/test_server_put_file");
+  return "PUT HANDLED";
+}
+void* handle_get(char* data) {
+  read_file_to_buffer(data, "server_files/test_server_file");
+  return data;
+}
+
 /*
  * thread worker that handles input from 
  * connected sockets
  */
 void* handle_socket(void* arg) {
-  char client_message[8196], server_message[8196];
   int* client_sock = (int*) arg; 
-  FILE *file = fopen("server_files/test_server_file", "rb");
-  int size = get_file_size(file); 
+  char* data = malloc(8196);
+  char* cmd;
 
-  while(1) {
+  while(!SHUTDOWN) {
    // Receive client's message:
     if (recv(*client_sock, client_message, 
             sizeof(client_message), 0) > 0){
-      char *cmd = strtok(client_message, " ");
-      //send(*client_sock, client_message, strlen(client_message), 0); 
+      printf("cmd: %s\n", cmd);
+      cmd = strtok(client_message, " ");
+      if(strcmp(cmd, "GET") == 0) {
+        data = (char*)handle_get(data);
+      } else if(strcmp(cmd, "PUT") == 0) {
+        data = handle_put(client_sock, data);
+      } else {
+        data = "Unrecognized command";
+      }
+      sprintf(server_message, "%s", data);
+      send(*client_sock, server_message, strlen(data), 0); 
 
-      
-      send_file(file, *client_sock);
+      //if(cmd == "GET server_files/test_server_file") { 
+      //  data = send_file(file, *client_sock, size);
+      //} else {
+      //  strcpy(server_message, "Unrecognized Command"); 
+      //  send(*client_sock, server_message, strlen(client_message), 0); 
+      //}
+      //send(*client_sock, client_message, strlen(client_message), 0); 
    }
     if(*client_message) {
-      printf("Msg from client: %ld\n", get_file_size(file));
+      printf("Msg from client: %s\n", client_message);
       *client_message = NULL;
     }
   }
@@ -77,13 +104,8 @@ int main_loop(int socket_desc) {
   }
 }
 
-int main(void)
-{
-  int socket_desc, client_sock;
-  pthread_t pthread[10]; // 10 max concurrent connections
-  struct sockaddr_in server_addr, client_addr;
-  char server_message[8196], client_message[8196];
-  
+int init_sockets() {
+  int socket_desc;
   // Clean buffers:
   memset(server_message, '\0', sizeof(server_message));
   memset(client_message, '\0', sizeof(client_message));
@@ -108,7 +130,11 @@ int main(void)
     return -1;
   }
   printf("Done with binding\n");
-  
+  return socket_desc;
+ 
+}
+
+int listen_for_incoming_connections(int socket_desc) {
   // Listen for clients:
   if(listen(socket_desc, 1) < 0){
     printf("Error while listening\n");
@@ -116,6 +142,16 @@ int main(void)
   }
   printf("\nListening for incoming connections.....\n");
  
+}
+int main(void)
+{
+  int socket_desc = init_sockets();
+
+  if(listen_for_incoming_connections(socket_desc) < 0) {
+    // error occurred
+    return -1;
+  }
+
   main_loop(socket_desc);
  
   return 0;
