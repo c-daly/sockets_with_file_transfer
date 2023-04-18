@@ -20,9 +20,17 @@ static void sigintHandler(int sig) {
   exit(EXIT_SUCCESS);
 }
 
-void handlePutSequence(int socket_desc, char *server_response, char *server_message, char* filename) {
+void handleGetSequence(int socket_desc, char *server_response, char* server_message, char* filename, char *filename2) {
+  printf("filename: %s\n", filename);
+  if(recv(socket_desc, server_response, 8196, 0) > 0){
+    FILE* file = fopen(filename, "w+");  
+    fprintf(file, "%s", server_response);
+  }
+}
+
+void handlePutSequence(int socket_desc, char *server_response, char *server_message, char* filename, char* filename2) {
   printf("Handling put sequence: %s, %s\n", server_response, filename);
-  read_file_to_buffer(server_message, filename);
+  read_file_to_buffer(server_message, filename2);
   //printf("server_message: %s\n", server_message);
   send(socket_desc, server_message, strlen(server_message), 0);
 }
@@ -104,10 +112,11 @@ int main(int argc, char* argv[])
   
   //printf("Server's response: %s\n",server_response);
   if(strcmp(command, "GET") == 0) {
-    FILE* file = fopen("client_file", "w+");  
-    fprintf(file, "%s", server_response);
+    //FILE* file = fopen("client_file", "w+");  
+    //fprintf(file, "%s", server_response);
+    handleGetSequence(socket_desc, server_response, server_message, filename, argv[3]);
   } else if(strcmp(command, "PUT") == 0) {
-    handlePutSequence(socket_desc, server_response, server_message, filename); 
+    handlePutSequence(socket_desc, server_response, server_message, filename, argv[3]); 
   } else {
     printf("%s\n", server_response);
   }

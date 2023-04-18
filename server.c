@@ -50,7 +50,7 @@ void* handle_socket(void* arg) {
    // Receive client's message:
     if (recv(*client_sock, client_message, 
             sizeof(client_message), 0) > 0){
-      printf("cmd: %s\n", cmd);
+      printf("client_message: %s\n", client_message);
       cmd = strtok(client_message, " ");
       if(strcmp(cmd, "GET") == 0) {
         data = (char*)handle_get(data);
