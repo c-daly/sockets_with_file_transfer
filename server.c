@@ -25,6 +25,7 @@ char* send_file(FILE *fp, int sockfd, int size)
   return data;
 }
 void* handle_put(int* client_sock, char* data) {
+  send(*client_sock, "ACK", 3, 0);
   recv(*client_sock, data, 8196, 0);
   printf("data: %s\n", data);
   save_buffer_to_file(data, "server_files/test_server_put_file");

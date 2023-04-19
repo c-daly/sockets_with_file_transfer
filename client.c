@@ -30,6 +30,13 @@ void handleGetSequence(int socket_desc, char *server_response, char* server_mess
 
 void handlePutSequence(int socket_desc, char *server_response, char *server_message, char* filename, char* filename2) {
   printf("Handling put sequence: %s, %s\n", server_response, filename);
+  // Receive the server's response:
+  if(recv(socket_desc, server_response, 8196, 0) < 0){
+    printf("Error while receiving server's msg\n");
+  } else {
+    printf("response: %s\n", server_response);
+  }
+ 
   read_file_to_buffer(server_message, filename);
   printf("server_message: %s\n", server_message);
   send(socket_desc, server_message, strlen(server_message), 0);
@@ -92,34 +99,22 @@ int main(int argc, char* argv[])
     return -1;
   }
   printf("Connected with server successfully\n");
-
-  //while(!SHUTDOWN) {
-  // Get input from the user:
-  //gets(server_message);
   
-  //printf("%s\n", server_message);
   // Send the message to server:
   if(send(socket_desc, server_message, strlen(server_message), 0) < 0){
     printf("Unable to send message\n");
     return -1;
   }
-  
-  // Receive the server's response:
-  //if(recv(socket_desc, server_response, 8196, 0) < 0){
-  //  printf("Error while receiving server's msg\n");
-  //  return -1;
-  //}
-  
+
   //printf("Server's response: %s\n",server_response);
   if(strcmp(command, "GET") == 0) {
-    //FILE* file = fopen("client_file", "w+");  
-    //fprintf(file, "%s", server_response);
     handleGetSequence(socket_desc, server_response, server_message, filename, argv[3]);
   } else if(strcmp(command, "PUT") == 0) {
     handlePutSequence(socket_desc, server_response, server_message, filename, argv[3]); 
   } else {
     printf("%s\n", server_response);
   }
+
   // Close the socket:
   close(socket_desc);
   

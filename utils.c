@@ -25,7 +25,9 @@ long get_file_size(FILE* file) {
 void save_buffer_to_file(char* buff, char* filename) {
   FILE *fp = open_file_for_writing(filename);
   int size = strlen(buff);
-  fwrite(buff, size, 1, fp);
+  int res = fwrite(buff, size, 1, fp);
+  fflush(fp);
+  printf("filename: %s\n", filename);
   //fprintf(fp, "%s", buff);
 }
 
