@@ -24,13 +24,13 @@ char* send_file(FILE *fp, int sockfd, int size)
   send(sockfd, data, size, 0);
   return data;
 }
-void* handle_put(int* client_sock, char* data) {
+int handle_put(int* client_sock, char* data) {
   send(*client_sock, "ACK", 3, 0);
   recv(*client_sock, data, 8196, 0);
   printf("data: %s\n", data);
-  save_buffer_to_file(data, "server_files/test_server_put_file");
-  return "PUT HANDLED";
+  return save_buffer_to_file(data, "server_files/test_server_put_file");
 }
+
 void* handle_get(char* data) {
   read_file_to_buffer(data, "server_files/test_server_file");
   return data;
@@ -54,20 +54,17 @@ void* handle_socket(void* arg) {
       if(strcmp(cmd, "GET") == 0) {
         data = (char*)handle_get(data);
       } else if(strcmp(cmd, "PUT") == 0) {
-        data = handle_put(client_sock, data);
+        int res = handle_put(client_sock, data);
+        if(res > 0) {
+          sprintf(data, "%d", res);
+        } else {
+          sprintf(data, "%d", -1);
+        }
       } else {
         data = "Unrecognized command";
       }
       sprintf(server_message, "%s", data);
       send(*client_sock, server_message, strlen(data), 0); 
-
-      //if(cmd == "GET server_files/test_server_file") { 
-      //  data = send_file(file, *client_sock, size);
-      //} else {
-      //  strcpy(server_message, "Unrecognized Command"); 
-      //  send(*client_sock, server_message, strlen(client_message), 0); 
-      //}
-      //send(*client_sock, client_message, strlen(client_message), 0); 
    }
     if(*client_message) {
       printf("Msg from client: %s\n", client_message);

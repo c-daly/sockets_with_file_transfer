@@ -22,13 +22,15 @@ long get_file_size(FILE* file) {
   return size;
 }
 
-void save_buffer_to_file(char* buff, char* filename) {
+int save_buffer_to_file(char* buff, char* filename) {
   FILE *fp = open_file_for_writing(filename);
   int size = strlen(buff);
-  int res = fwrite(buff, size, 1, fp);
-  fflush(fp);
-  printf("filename: %s\n", filename);
-  //fprintf(fp, "%s", buff);
+  int res1 = fwrite(buff, size, 1, fp);
+  printf("fwrite size: %d\n", res1);
+  if(res1 > 0) {
+    fflush(fp);
+  }
+  return res1;
 }
 
 void read_file_to_buffer(char* buff, char* filename) {
