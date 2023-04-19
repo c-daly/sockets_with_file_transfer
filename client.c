@@ -23,7 +23,7 @@ static void sigintHandler(int sig) {
 void handleGetSequence(int socket_desc, char *server_response, char* server_message, char* filename, char *filename2) {
   printf("filename: %s\n", filename);
   if(recv(socket_desc, server_response, 8196, 0) > 0){
-    FILE* file = fopen(filename, "w+");  
+    FILE* file = fopen(filename2, "w+");  
     fprintf(file, "%s", server_response);
   }
 }
