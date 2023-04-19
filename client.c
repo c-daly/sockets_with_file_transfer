@@ -30,8 +30,8 @@ void handleGetSequence(int socket_desc, char *server_response, char* server_mess
 
 void handlePutSequence(int socket_desc, char *server_response, char *server_message, char* filename, char* filename2) {
   printf("Handling put sequence: %s, %s\n", server_response, filename);
-  read_file_to_buffer(server_message, filename2);
-  //printf("server_message: %s\n", server_message);
+  read_file_to_buffer(server_message, filename);
+  printf("server_message: %s\n", server_message);
   send(socket_desc, server_message, strlen(server_message), 0);
 }
 
