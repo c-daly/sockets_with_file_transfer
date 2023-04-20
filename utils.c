@@ -33,11 +33,16 @@ int save_buffer_to_file(char* buff, char* filename) {
   return res1;
 }
 
-void read_file_to_buffer(char* buff, char* filename) {
-  FILE *fp = open_file_for_reading(filename);
+void read_fp_to_buffer(char* buff, FILE* fp) {
+  printf("read fp\n");
   int size = get_file_size(fp);
   fread(buff, size, 1, fp);
-  int x = 5;
+}
+
+
+void read_file_to_buffer(char* buff, char* filename) {
+  FILE *fp = open_file_for_reading(filename);
+  read_fp_to_buffer(buff, fp);
 }
 
 char* get_file_info(char* filename) {

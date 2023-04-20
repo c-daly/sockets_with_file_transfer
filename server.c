@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -6,6 +7,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "utils.h"
+#include "config.h"
+
 
 char client_message[8196], server_message[8196];
 //int socket_desc, client_sock;
@@ -14,25 +17,47 @@ struct sockaddr_in server_addr, client_addr;
 int SHUTDOWN = 0;
 
 
-char* send_file(FILE *fp, int sockfd, int size)
-{
-  char *data = malloc(size + 1);
+//char* send_file(FILE *fp, int sockfd, int size)
+//{
+//  char *data = malloc(size + 1);
+//
+//  printf("%s\n", data);
+//  fseek(fp, 0, SEEK_SET);
+//  fread(data, size, 1, fp); 
+//  send(sockfd, data, size, 0);
+//  return data;
+//}
 
-  printf("%s\n", data);
-  fseek(fp, 0, SEEK_SET);
-  fread(data, size, 1, fp); 
-  send(sockfd, data, size, 0);
+char* handle_info(char* data, char* filename) {
+  printf("Handle Info\n");
+  sprintf(data, "ls -la %s", filename);
+  printf("data: %s\n", data);
+  FILE* p = popen(data, "r"); 
+  read_fp_to_buffer(data, p);
   return data;
 }
-int handle_put(int* client_sock, char* data) {
+
+int handle_put(int* client_sock, char* data, char* filename) {
   send(*client_sock, "ACK", 3, 0);
-  recv(*client_sock, data, 8196, 0);
+  recv(*client_sock, data, 8192, 0);
   printf("data: %s\n", data);
-  return save_buffer_to_file(data, "server_files/test_server_put_file");
+  printf("filename: %s\n", filename);
+  return save_buffer_to_file(data, filename);
 }
 
-void* handle_get(char* data) {
-  read_file_to_buffer(data, "server_files/test_server_file");
+int handle_rm(char* path) {
+  printf("rm path: %s\n", path);
+  return remove(path);
+}
+
+int handle_md(char* path) {
+  //TODO: permissions?
+  printf("In md\n");
+  return mkdir(path, 0700);
+}
+
+void* handle_get(char* data, char* filename) {
+  read_file_to_buffer(data, filename);
   return data;
 }
 
@@ -43,23 +68,40 @@ void* handle_get(char* data) {
 void* handle_socket(void* arg) {
   int* client_sock = (int*) arg; 
   char* data = malloc(8196);
-  char* cmd;
+  char* cmd = malloc(4);
+  char* filename = malloc(50);
+  char* filename2 = malloc(50);
 
   while(!SHUTDOWN) {
    // Receive client's message:
     if (recv(*client_sock, client_message, 
-            sizeof(client_message), 0) > 0){
+            MESSAGE_SIZE, 0) > 0){
       printf("client_message: %s\n", client_message);
       cmd = strtok(client_message, " ");
-      if(strcmp(cmd, "GET") == 0) {
-        data = (char*)handle_get(data);
-      } else if(strcmp(cmd, "PUT") == 0) {
-        int res = handle_put(client_sock, data);
+      filename = strtok(NULL, " ");
+      filename2 = strtok(NULL, " ");
+
+      if(strcmp(cmd, "GET") == 0) 
+      {
+        data = (char*)handle_get(data, filename);
+      } 
+      else if(strcmp(cmd, "PUT") == 0) {
+        int res = handle_put(client_sock, data, filename2);
+
         if(res > 0) {
           sprintf(data, "%d", res);
         } else {
           sprintf(data, "%d", -1);
         }
+      } else if(strcmp(cmd, "INFO") == 0) {
+          data = (char*) handle_info(data, filename);
+      } else if(strcmp(cmd, "RM") == 0) {
+          printf("rm filename: %s\n", filename);
+          int res = handle_rm(filename);
+          sprintf(data, "%d", res);      
+      } else if(strcmp(cmd, "MD") == 0) {
+          int res = handle_md(filename);
+          sprintf(data, "%d", res);
       } else {
         data = "Unrecognized command";
       }
