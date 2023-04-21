@@ -70,7 +70,7 @@ void* handle_socket(void* arg) {
       if(strcmp(cmd, "GET") == 0) {
         data = (char*)handle_get(data, filename);
       } else if(strcmp(cmd, "PUT") == 0) {
-	  int res = handle_put(client_sock, data, filename2);
+	        int res = handle_put(client_sock, data, filename2);
           sprintf(data, "%d", res);
       } else if(strcmp(cmd, "INFO") == 0) {
           data = (char*) handle_info(data, filename);
