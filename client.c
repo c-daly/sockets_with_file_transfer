@@ -104,30 +104,24 @@ void craft_initial_server_message(char* server_message, int argc, char* argv[]) 
   } else if(argc >= 2) {
     sprintf(server_message, "%s %s %s", argv[1], argv[2], argv[3]);
   }
-
 }
 
-int command_is_rm(char* command) {
-  return strcmp(command, "RM") == 0; 
-}
-
-int command_is_info(char* command) {
-  return strcmp(command, "INFO") == 0; 
-}
-
-int command_is_md(char* command) {
-  return strcmp(command, "MD") == 0; 
-}
 void craft_server_message(char* server_message, char* command, char* filename, char* filename2, char* full_path1, char* full_path2) {
-
-    //if(strcmp(command, "RM") == 0) {
+    memset(server_message,'\0',sizeof(server_message));
     if(command_is_rm(command) ||
        command_is_info(command) ||
        command_is_md(command)) {
       sprintf(full_path1, "%s%s", SERVER_PATH, filename);
       sprintf(server_message, "%s %s", command, full_path1);
-    } else {
-      memset(server_message,'\0',sizeof(server_message));
+    } else if(command_is_put(command)){
+      sprintf(full_path1, "%s%s", CLIENT_PATH, filename);
+      sprintf(full_path2, "%s%s", SERVER_PATH, filename2);
+      sprintf(server_message, "%s %s %s", command, full_path1, full_path2);
+    } else if(command_is_get(command)) {
+      	sprintf(full_path1, "%s%s", SERVER_PATH, filename);
+      	sprintf(full_path2, "%s%s", CLIENT_PATH, filename2);
+      	sprintf(server_message, "%s %s %s", command, full_path1, full_path2);
+     } else {
       sprintf(server_message, "%s %s %s", command, full_path1, full_path2);
     }
 }
@@ -137,14 +131,10 @@ void populate_command_args(int argc, char* argv[], char* command, char* filename
     printf("Not enough args!");
   } 
   sprintf(command, "%s", argv[1]);
-  
-  printf("argv[2]: %s\n", argv[2]);
-  if(argc <= 3) {
-    sprintf(filename, "%s", argv[2]);
-  }
+  sprintf(filename, "%s", argv[2]);
 
   sprintf(filename2, "%s", argv[3]);
-  printf("filename: %s\n", filename);
+  printf("populate filename: %s\n", filename);
 }
 
 
@@ -170,15 +160,12 @@ void route_command_message(char* command, char* server_response, char* server_me
   }
 
   if(strcmp(command, "GET") == 0) {
-    strcpy(full_path1, filename);
-    strcat(SERVER_PATH, full_path1);
-    handleGetSequence(socket_desc, server_response, server_message, filename, filename2);
+    handleGetSequence(socket_desc, server_response, server_message, full_path1, full_path2);
   } else if(strcmp(command, "PUT") == 0) {
     handlePutSequence(socket_desc, server_response, server_message, filename, filename2); 
   } else if(strcmp(command, "INFO") == 0) {
     handleInfoSequence(socket_desc, server_response, server_message, filename, filename2); 
   } else if(strcmp(command, "RM") == 0) {
-    //strcat(SERVER_PATH, full_path1);
     printf("path: %s\n", full_path1);
     printf("server message: %s\n", server_message);
     handleRMSequence(socket_desc, server_response, server_message, full_path1, filename2); 

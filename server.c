@@ -11,22 +11,9 @@
 
 
 char client_message[8196], server_message[8196];
-//int socket_desc, client_sock;
 pthread_t pthread[10]; // 10 max concurrent connections
 struct sockaddr_in server_addr, client_addr;
 int SHUTDOWN = 0;
-
-
-//char* send_file(FILE *fp, int sockfd, int size)
-//{
-//  char *data = malloc(size + 1);
-//
-//  printf("%s\n", data);
-//  fseek(fp, 0, SEEK_SET);
-//  fread(data, size, 1, fp); 
-//  send(sockfd, data, size, 0);
-//  return data;
-//}
 
 char* handle_info(char* data, char* filename) {
   printf("Handle Info\n");
@@ -51,7 +38,6 @@ int handle_rm(char* path) {
 }
 
 int handle_md(char* path) {
-  //TODO: permissions?
   printf("In md\n");
   return mkdir(path, 0700);
 }
@@ -81,18 +67,11 @@ void* handle_socket(void* arg) {
       filename = strtok(NULL, " ");
       filename2 = strtok(NULL, " ");
 
-      if(strcmp(cmd, "GET") == 0) 
-      {
+      if(strcmp(cmd, "GET") == 0) {
         data = (char*)handle_get(data, filename);
-      } 
-      else if(strcmp(cmd, "PUT") == 0) {
-        int res = handle_put(client_sock, data, filename2);
-
-        if(res > 0) {
+      } else if(strcmp(cmd, "PUT") == 0) {
+	  int res = handle_put(client_sock, data, filename2);
           sprintf(data, "%d", res);
-        } else {
-          sprintf(data, "%d", -1);
-        }
       } else if(strcmp(cmd, "INFO") == 0) {
           data = (char*) handle_info(data, filename);
       } else if(strcmp(cmd, "RM") == 0) {
@@ -181,6 +160,7 @@ int listen_for_incoming_connections(int socket_desc) {
   printf("\nListening for incoming connections.....\n");
  
 }
+
 int main(void)
 {
   int socket_desc = init_sockets();

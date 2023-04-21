@@ -3,6 +3,26 @@
 #include <string.h>
 #include "utils.h"
 
+int command_is_rm(char* command) {
+  return strcmp(command, "RM") == 0; 
+}
+
+int command_is_put(char* command) {
+  return strcmp(command, "PUT") == 0; 
+}
+
+int command_is_get(char* command) {
+  return strcmp(command, "GET") == 0; 
+}
+
+int command_is_info(char* command) {
+  return strcmp(command, "INFO") == 0; 
+}
+
+int command_is_md(char* command) {
+  return strcmp(command, "MD") == 0; 
+}
+
 FILE* open_file_for_reading(char* filename) {
   return fopen(filename, "rb");
 }
